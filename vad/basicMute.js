@@ -95,8 +95,8 @@ async function join() {
     // create local tracks, using microphone and camera
     //AgoraRTC.createMicrophoneAudioTrack(),
     AgoraRTC.createCustomAudioTrack({ mediaStreamTrack: gumStream.getAudioTracks()[0] }),
-    //AgoraRTC.createCameraVideoTrack()
-    AgoraRTC.createCustomVideoTrack({ mediaStreamTrack: gumStream.getVideoTracks()[0] })
+    AgoraRTC.createCameraVideoTrack()
+    //AgoraRTC.createCustomVideoTrack({ mediaStreamTrack: gumStream.getVideoTracks()[0] })
   ]);
 
   showMuteButton();
@@ -109,8 +109,6 @@ async function join() {
   await client.publish(Object.values(localTracks));
   console.log("publish success");
   setupVAD(gumStream.clone());
-  //enableVAD();
-
 }
 
 async function leave() {
@@ -299,55 +297,5 @@ function setupVAD(stream){
       }
       console.log(audioSamplesArrSorted.length+" "+audioSamplesArrSorted);
   }
-}
-
-function enableVAD() {
-
-        var analyser = audioTrackVAD._source.analyserNode;
-        analyser.fftSize = 1024;
-        analyser.smoothingTimeConstant = .3;
-
-        var MaxAudioSamples=400;
-        var MaxBackgroundNoiseLevel=30;
-        var SilenceOffeset=10;
-        var audioSamplesArr=[];
-        var audioSamplesArrSorted=[];
-        var exceedCount=0;
-        var exceedCountThreshold=4;
-
-        setInterval(() => {
-                if (!audioTrackVAD)
-                        return;
-
-                //$('#mic-activity-agora').html("Agora getVol: "+Math.floor(audioTrackVAD.getVolumeLevel()*60));
-                audioLevel=getMicLevel();
-                if (audioLevel<=MaxBackgroundNoiseLevel) {
-                        if (audioSamplesArr.length >= MaxAudioSamples) {
-                                        var removed = audioSamplesArr.shift();
-                                        var removedIndex = audioSamplesArrSorted.indexOf(removed);
-                                        if (removedIndex>-1) {
-                                                        audioSamplesArrSorted.splice(removedIndex, 1);
-                                        }
-                        }
-                        audioSamplesArr.push(audioLevel);
-                        audioSamplesArrSorted.push(audioLevel);
-                        audioSamplesArrSorted.sort((a, b) => a - b);
-                }
-                var background = Math.floor(3 * audioSamplesArrSorted[Math.floor(audioSamplesArrSorted.length / 2)] / 2);
-                if (audioLevel>background+SilenceOffeset) {
-                        exceedCount++;
-                } else {
-                        exceedCount=0;
-                }
-                $('#mic-activity').html("Direct getVol  "+audioLevel);
-                $('#background-noise').html("Background level  "+background);
-                $('#exceed').html("exceedCount  "+exceedCount);
-                if (exceedCount>exceedCountThreshold) {
-                        $('#vad').html("VOICE DETECTED");
-                } else {
-                        $('#vad').html("");
-                }
-                console.log(audioSamplesArrSorted.length+" "+audioSamplesArrSorted);
-          }, 100);
 }
 
